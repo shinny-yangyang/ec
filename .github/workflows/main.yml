@@ -236,7 +236,7 @@ jobs:
 
   test-rational:
     needs: [build, create-virtualenv]
-    runs-on:ubuntu-22.04
+    runs-on: ubuntu-22.04
     continue-on-error: true
 
     steps:
