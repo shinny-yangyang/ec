@@ -14,6 +14,9 @@ jobs:
         uses: ocaml/setup-ocaml@v3
         with:
           ocaml-compiler: 4.07
+      
+      - name: Install build tooling
+        run: opam install -y dune opam-depext
 
       - name: Install dependencies
         run: |
