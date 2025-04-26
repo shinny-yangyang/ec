@@ -1,65 +1,60 @@
 name: Main workflow
 
-on:
-  [push]
-
+on: [push]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-
+    runs-on: ubuntu-22.04
+    
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Use OCaml
         uses: ocaml/setup-ocaml@v3
-        with:
-          ocaml-compiler: ocaml-variants.4.12.0+options,ocaml-option-flambda
-          dune-cache: true
 
-      - name: install dependencies
-        run: opam exec -- dune external-lib-deps @@default | tail -n +2 |
-          awk '{print $2}' | grep -v "\." | xargs opam depext -iy
+      - name: Install dependencies
+        run: |
+          opam exec -- dune external-lib-deps @@default \
+          | tail -n +2 | awk '{print $2}' | grep -v "\." | xargs opam depext -iy
 
-      - name: build solvers
+      - name: Build solvers
         run: opam exec -- make
 
-      - name: generate patch with new binaries
+      - name: Generate patch with new binaries
         run: git diff --output=binaries_patch --binary
 
-      - name: store patch
-        uses: actions/upload-artifact@v2
+      - name: Store patch
+        uses: actions/upload-artifact@v4
         with:
           name: binaries_patch
           path: binaries_patch
           retention-days: 1
 
-      - name: remove patch
+      - name: Remove local patch
         run: rm binaries_patch
 
-      - name: commit binaries
-        # This checks if the binaries in the repo are up to date and if not,
-        # create a new commit from the author of the last commit
+      - name: Commit binaries
+        env:
+          AUTHOR_NAME:  ${{ github.event.commits[0].author.name }}
+          AUTHOR_EMAIL: ${{ github.event.commits[0].author.email }}
         run: |
-          git config --local user.email ${{ github.event.commits[0].author.email }}
-          git config --local user.name ${{ github.event.commits[0].author.name }}
+          git config --local user.name  "$AUTHOR_NAME"
+          git config --local user.email "$AUTHOR_EMAIL"
           git diff --quiet && git diff --staged --quiet || \
             git commit -am "${{ github.event.commits[0].message }}; update binaries" \
-            --author=${{ github.event.commits[0].author.email }}
+            --author="$AUTHOR_NAME <$AUTHOR_EMAIL>"
 
       - name: Push changes
         uses: ad-m/github-push-action@master
-        continue-on-error: true
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           branch: ${{ github.ref }}
 
-      - name: run ocaml tests
+      - name: Run OCaml tests
         run: opam exec -- dune runtest
-
   create-virtualenv:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -78,7 +73,7 @@ jobs:
 
   test-list:
     needs: [build, create-virtualenv]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     continue-on-error: true
 
     steps:
@@ -110,7 +105,7 @@ jobs:
 
   test-text:
     needs: [build, create-virtualenv]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     continue-on-error: true
 
     steps:
@@ -142,7 +137,7 @@ jobs:
 
   test-logo:
     needs: [build, create-virtualenv]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     continue-on-error: true
 
     steps:
@@ -175,7 +170,7 @@ jobs:
 
   test-tower:
     needs: [build, create-virtualenv]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     continue-on-error: true
 
     steps:
@@ -207,7 +202,7 @@ jobs:
 
   test-graph:
     needs: [build, create-virtualenv]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     continue-on-error: true
 
     steps:
@@ -241,7 +236,7 @@ jobs:
 
   test-rational:
     needs: [build, create-virtualenv]
-    runs-on: ubuntu-latest
+    runs-on:ubuntu-22.04
     continue-on-error: true
 
     steps:
@@ -274,7 +269,7 @@ jobs:
 
   test-scientificLaws:
     needs: [build, create-virtualenv]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     continue-on-error: true
 
     steps:
@@ -309,7 +304,7 @@ jobs:
 
   test-regexes:
     needs: [build, create-virtualenv]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     continue-on-error: true
     if: false
 
